@@ -1,0 +1,107 @@
+name: Proto Generation Check
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'proto/**'
+      - 'Makefile'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'proto/**'
+      - 'Makefile'
+      - '.github/workflows/**'
+
+jobs:
+  validate-proto-generation:
+    name: Validate Proto File Generation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Install Protocol Buffer Compiler
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler
+
+    - name: Install Go protoc plugins
+      run: |
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+    - name: Verify protoc installation
+      run: |
+        protoc --version
+        which protoc-gen-go
+        which protoc-gen-go-grpc
+
+    - name: Clean previous generated files
+      run: make clean
+
+    - name: Generate Go protobuf files
+      run: make go
+
+    - name: Verify generated Go files exist
+      run: |
+        echo "Checking for generated Go files..."
+        ls -la gen/go/
+        
+        if [[ ! -f "gen/go/geo_location.pb.go" ]]; then
+          echo "❌ Error: geo_location.pb.go was not generated"
+          exit 1
+        fi
+        
+        if [[ ! -f "gen/go/geo_location_grpc.pb.go" ]]; then
+          echo "❌ Error: geo_location_grpc.pb.go was not generated"
+          exit 1
+        fi
+        
+        echo "✅ All required Go protobuf files generated successfully"
+
+    - name: Validate generated Go code compiles
+      run: |
+        cd gen/go
+        go mod init github.com/test/proto-validation
+        go mod tidy
+        go build -v ./...
+        echo "✅ Generated Go code compiles without errors"
+
+    - name: Generate PHP protobuf files
+      run: make php
+
+    - name: Verify generated PHP files exist
+      run: |
+        echo "Checking for generated PHP files..."
+        ls -la gen/php/
+        
+        if [[ ! -d "gen/php/RaidProto" ]]; then
+          echo "❌ Error: PHP RaidProto directory was not generated"
+          exit 1
+        fi
+        
+        echo "✅ PHP protobuf files generated successfully"
+
+    - name: Test complete generation process
+      run: |
+        make clean
+        make proto
+        echo "✅ Complete proto generation process works correctly"
+
+    - name: Display generation results
+      run: |
+        echo "📁 Generated file structure:"
+        find gen -type f | sort
+        
+        echo ""
+        echo "📊 File counts:"
+        echo "Go files: $(find gen/go -name '*.go' | wc -l)"
+        echo "PHP files: $(find gen/php -name '*.php' | wc -l)"

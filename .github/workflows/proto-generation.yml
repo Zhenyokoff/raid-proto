@@ -1,0 +1,135 @@
+name: Proto Generation Check
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'proto/**'
+      - 'Makefile'
+      - '.github/workflows/proto-generation.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'proto/**'
+      - 'Makefile'
+      - '.github/workflows/proto-generation.yml'
+
+jobs:
+  proto-generation:
+    name: Validate Proto Generation
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ['1.21', '1.22', '1.23']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Install protoc (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        PROTOC_VERSION="28.3"
+        curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+        unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d $HOME/.local
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install protoc (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install protobuf
+
+    - name: Install protoc (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $PROTOC_VERSION = "28.3"
+        Invoke-WebRequest -Uri "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-win64.zip" -OutFile "protoc.zip"
+        Expand-Archive -Path "protoc.zip" -DestinationPath "$env:USERPROFILE\protoc"
+        echo "$env:USERPROFILE\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+    - name: Install Go protoc plugins
+      run: |
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+    - name: Verify protoc installation
+      run: |
+        protoc --version
+        protoc-gen-go --version
+        protoc-gen-go-grpc --version
+
+    - name: Clean generated files
+      run: make clean
+
+    - name: Generate Go proto files
+      run: make go
+
+    - name: Verify Go files were generated
+      run: |
+        if [ ! -f "gen/go/geo_location.pb.go" ]; then
+          echo "Error: geo_location.pb.go was not generated"
+          exit 1
+        fi
+        if [ ! -f "gen/go/geo_location_grpc.pb.go" ]; then
+          echo "Error: geo_location_grpc.pb.go was not generated"
+          exit 1
+        fi
+        echo "✅ All Go proto files generated successfully"
+      shell: bash
+
+    - name: Validate Go code compiles
+      run: |
+        cd gen/go
+        go mod init test-module || true
+        go mod tidy
+        go build ./...
+        echo "✅ Generated Go code compiles successfully"
+
+    - name: Generate PHP proto files
+      if: runner.os != 'Windows'  # Skip PHP on Windows for now
+      run: make php
+
+    - name: Verify PHP files were generated
+      if: runner.os != 'Windows'
+      run: |
+        if [ ! -d "gen/php/RaidProto" ]; then
+          echo "Error: PHP proto files were not generated"
+          exit 1
+        fi
+        echo "✅ PHP proto files generated successfully"
+      shell: bash
+
+    - name: Generate all proto files
+      run: make proto
+
+    - name: List generated files
+      run: |
+        echo "Generated files structure:"
+        find gen -type f -name "*.go" -o -name "*.php" | sort
+      shell: bash
+
+  proto-lint:
+    name: Lint Proto Files
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install buf
+      run: |
+        BUF_VERSION="1.28.1"
+        curl -sSL "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-$(uname -s)-$(uname -m)" -o "/usr/local/bin/buf"
+        chmod +x "/usr/local/bin/buf"
+
+    - name: Lint proto files
+      run: |
+        cd proto
+        buf lint geo_location.proto --error-format=text || true
+        echo "✅ Proto lint check completed"
