@@ -20,8 +20,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        go-version: ['1.21', '1.22', '1.23']
+        os: [ubuntu-latest, macos-latest]
+        go-version: ['1.24', '1.25']
     
     steps:
     - name: Checkout code
@@ -44,14 +44,6 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         brew install protobuf
-
-    - name: Install protoc (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        $PROTOC_VERSION = "28.3"
-        Invoke-WebRequest -Uri "https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-win64.zip" -OutFile "protoc.zip"
-        Expand-Archive -Path "protoc.zip" -DestinationPath "$env:USERPROFILE\protoc"
-        echo "$env:USERPROFILE\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Install Go protoc plugins
       run: |
@@ -92,11 +84,9 @@ jobs:
         echo "✅ Generated Go code compiles successfully"
 
     - name: Generate PHP proto files
-      if: runner.os != 'Windows'  # Skip PHP on Windows for now
       run: make php
 
     - name: Verify PHP files were generated
-      if: runner.os != 'Windows'
       run: |
         if [ ! -d "gen/php/RaidProto" ]; then
           echo "Error: PHP proto files were not generated"
