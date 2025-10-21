@@ -1,0 +1,21 @@
+{
+  "name": "raid/proto",
+  "description": "Protobuf contracts for Raid project",
+  "type": "library",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Your Name",
+      "email": "you@example.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.0",
+    "google/protobuf": "^3.17"
+  },
+  "autoload": {
+    "psr-4": {
+      "RaidProto\\": "gen/php/"
+    }
+  }
+}

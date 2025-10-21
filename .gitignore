@@ -1,0 +1,14 @@
+# Go
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# PHP
+vendor/
+composer.lock
+
+# Protobuf generated files
+gen/

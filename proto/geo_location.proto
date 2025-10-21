@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package geo_location;
+
+option go_package = "raid-proto/gen/go/geo_location";
+option php_namespace = "RaidProto\\GeoLocation";
+option php_metadata_namespace = "RaidProto\\GPBMetadata";
+
+import "google/protobuf/timestamp.proto";
+
+// GeoLocationService provides operations for managing geo locations
+service GeoLocationService {
+  // GetGeoLocationByName retrieves a geo location by its name
+  rpc GetGeoLocationByName(GeoLocationRequest) returns (GeoLocationResponse);
+  
+  // CreateGeoLocation creates a new geo location
+  rpc CreateGeoLocation(CreateGeoLocationRequest) returns (GeoLocationResponse);
+  
+  // UpdateGeoLocation updates an existing geo location
+  rpc UpdateGeoLocation(UpdateGeoLocationRequest) returns (GeoLocationResponse);
+}
+
+// Request message for getting geo location by name
+message GeoLocationRequest {
+  string name = 1;
+}
+
+// Response message containing geo location data
+message GeoLocationResponse {
+  string id = 1;
+  string class = 2;
+  string type = 3;
+  string name = 4;
+  double latitude = 5;
+  double longitude = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+// Request message for creating a new geo location
+message CreateGeoLocationRequest {
+  string class = 1;
+  string type = 2;
+  string name = 3;
+  double latitude = 4;
+  double longitude = 5;
+}
+
+// Request message for updating an existing geo location
+message UpdateGeoLocationRequest {
+  string id = 1;
+  string class = 2;
+  string type = 3;
+  string name = 4;
+  double latitude = 5;
+  double longitude = 6;
+}
