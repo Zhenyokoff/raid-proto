@@ -1,5 +1,5 @@
 {
-  "name": "raid-proto",
+  "name": "zhenyokoff/raid-proto",
   "description": "Protobuf contracts for Raid project",
   "type": "library",
   "license": "proprietary",
