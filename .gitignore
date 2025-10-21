@@ -9,6 +9,3 @@ vendor/
 # PHP
 vendor/
 composer.lock
-
-# Protobuf generated files
-gen/
