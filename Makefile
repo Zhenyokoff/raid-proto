@@ -23,10 +23,17 @@ go:
 php:
 	@echo "Generating PHP protobuf code..."
 	@mkdir -p gen/php
+	@GRPC_PHP_PLUGIN=$$(which grpc_php_plugin || echo "/opt/homebrew/bin/grpc_php_plugin"); \
+	if [ ! -x "$$GRPC_PHP_PLUGIN" ]; then \
+		echo "Error: grpc_php_plugin not found. Please install it:"; \
+		echo "  - macOS: brew install grpc"; \
+		echo "  - Ubuntu: apt-get install protobuf-compiler-grpc"; \
+		exit 1; \
+	fi; \
 	protoc --proto_path=proto \
 		--php_out=gen/php \
 		--grpc_out=gen/php \
-		--plugin=protoc-gen-grpc=/opt/homebrew/bin/grpc_php_plugin \
+		--plugin=protoc-gen-grpc=$$GRPC_PHP_PLUGIN \
 		$(PROTO_FILES)
 	@echo "PHP protobuf code generated successfully"
 
