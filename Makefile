@@ -21,8 +21,14 @@ go:
 	@echo "Go protobuf code generated successfully"
 
 php:
+	@echo "Generating PHP protobuf code..."
 	@mkdir -p gen/php
-	protoc --proto_path=proto --php_out=gen/php $(PROTO_FILES)
+	protoc --proto_path=proto \
+		--php_out=gen/php \
+		--grpc_out=gen/php \
+		--plugin=protoc-gen-grpc=/opt/homebrew/bin/grpc_php_plugin \
+		$(PROTO_FILES)
+	@echo "PHP protobuf code generated successfully"
 
 proto: go php
 
