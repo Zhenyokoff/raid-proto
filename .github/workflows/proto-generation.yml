@@ -40,10 +40,16 @@ jobs:
         unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d $HOME/.local
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+    - name: Install gRPC PHP plugin (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler-grpc
+
     - name: Install protoc (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install protobuf
+        brew install protobuf grpc
 
     - name: Install Go protoc plugins
       run: |

@@ -1,4 +1,4 @@
-name: Proto Generation Check
+name: Proto Build Check
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
     - name: Install Protocol Buffer Compiler
       run: |
         sudo apt-get update
-        sudo apt-get install -y protobuf-compiler
+        sudo apt-get install -y protobuf-compiler protobuf-compiler-grpc
 
     - name: Install Go protoc plugins
       run: |
