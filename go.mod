@@ -1,4 +1,4 @@
-module raid-proto
+module github.com/zhenyokoff/raid-proto
 
 go 1.25.1
 
